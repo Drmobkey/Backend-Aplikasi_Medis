@@ -1,0 +1,21 @@
+# Abaikan folder Virtual Environment (Sangat Penting!)
+venv/
+env/
+.venv/
+
+# Abaikan file cache Python (File sampah otomatis)
+__pycache__/
+*.pyc
+
+# Abaikan konfigurasi environment (Kunci rahasia/password)
+.env
+
+# Abaikan file sistem operasi & Editor
+.DS_Store
+.vscode/
+.idea/
+
+# Catatan untuk Model Machine Learning
+# Jika file best_model.keras ukurannya >100MB, Github akan menolak.
+# Jika >100MB, hapus tanda pagar (#) di baris bawah ini:
+*.keras
