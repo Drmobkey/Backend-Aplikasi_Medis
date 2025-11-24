@@ -1,0 +1,10 @@
+flask 
+flask-cors 
+tensorflow
+pydicom 
+opencv-python 
+pillow 
+numpy
+pylibjpeg 
+pylibjpeg-libjpeg 
+pylibjpeg-openjpeg

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Gambar X-Ray</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: none;
+        }
+        .img-preview {
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+
+<body class="container py-5">
+
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-primary">Analisis Gambar X-Ray DICOM</h2>
+        <p class="text-muted">Upload file DICOM untuk mendeteksi kualitas citra radiografi</p>
+    </div>
+
+    <!-- Tombol Refresh -->
+    <div class="d-flex justify-content-end mb-3">
+        <button id="refresh-button" class="btn btn-outline-danger btn-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg>
+            Reset Halaman
+        </button>
+    </div>
+
+    <div class="row g-4">
+        <!-- Kolom Kiri: Form Upload -->
+        <div class="col-md-5">
+            <div class="card p-4 mb-4">
+                <h5 class="card-title mb-3">Prediksi Single</h5>
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="singleFile" class="form-label">Pilih 1 File (.dcm)</label>
+                        <input class="form-control" type="file" id="singleFile" name="file" accept=".dcm" required>
+                    </div>
+                    <button class="btn btn-primary w-100" type="submit">Analisis Single</button>
+                </form>
+            </div>
+
+            <div class="card p-4">
+                <h5 class="card-title mb-3">Prediksi Multiple (Batch)</h5>
+                <form id="multi-form" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="multiFiles" class="form-label">Pilih Banyak File (.dcm)</label>
+                        <input class="form-control" type="file" id="multiFiles" name="files" accept=".dcm" multiple required>
+                    </div>
+                    <button class="btn btn-success w-100" type="submit">Analisis Multiple & Download Excel</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Kolom Kanan: Hasil -->
+        <div class="col-md-7">
+            <!-- Loading Indicator -->
+            <div id="loading" class="alert alert-warning d-none text-center">
+                <div class="spinner-border spinner-border-sm text-dark me-2" role="status"></div>
+                Sedang memproses data, mohon tunggu...
+            </div>
+
+            <!-- Hasil Single -->
+            <div id="single-result-container" class="d-none">
+                <div class="card p-3 mb-4 text-center">
+                    <h5 class="card-title">Hasil Analisis Single</h5>
+                    <img id="dicom-image" class="img-preview img-fluid mx-auto d-block mb-3" />
+                    <div id="result-text" class="alert alert-info text-start"></div>
+                </div>
+            </div>
+
+            <!-- Hasil Multiple -->
+            <div id="multi-result-container" class="d-none">
+                <div class="card p-4 mb-4">
+                    <h4 class="card-title text-success">Hasil Analisis Multiple</h4>
+                    <p id="summary-text" class="fw-bold"></p>
+                    <ul id="class-summary" class="list-group mb-3"></ul>
+                    <a id="download-excel" class="btn btn-success" href="#">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-excel-fill" viewBox="0 0 16 16">
+                            <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.793 4L10 8.207 10 4a1 1 0 0 0-1-1z"/>
+                            <path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/>
+                        </svg>
+                        Download Laporan Excel (.xlsx)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3 Bagian untuk Tindak Lanjut (Ditampilkan untuk Single & Multiple) -->
+    <div id="action-result" class="row mt-4 d-none">
+        <div class="col-12">
+            <h4 class="mb-3 border-bottom pb-2">Rekomendasi Tindak Lanjut</h4>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-primary">
+                <div class="card-header bg-primary text-white fw-bold">Penyebab / Pengulangan</div>
+                <div class="card-body">
+                    <ul id="pengulangan-list" class="list-group list-group-flush small"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-warning">
+                <div class="card-header bg-warning text-dark fw-bold">Deskripsi Masalah</div>
+                <div class="card-body">
+                    <ul id="diskripsi-list" class="list-group list-group-flush small"></ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white fw-bold">Saran Perbaikan</div>
+                <div class="card-body">
+                    <ul id="tindaklanjut-list" class="list-group list-group-flush small"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadForm = document.getElementById("upload-form");
+        const multiForm = document.getElementById("multi-form");
+        
+        // Single Result Elements
+        const singleResultContainer = document.getElementById("single-result-container");
+        const resultTextDiv = document.getElementById("result-text");
+        const imgTag = document.getElementById("dicom-image");
+        
+        // Multiple Result Elements
+        const multiResultContainer = document.getElementById("multi-result-container");
+        const summaryText = document.getElementById("summary-text");
+        const classSummary = document.getElementById("class-summary");
+        const downloadExcelBtn = document.getElementById("download-excel");
+        
+        // Common Elements
+        const loadingDiv = document.getElementById("loading");
+        const actionResult = document.getElementById("action-result");
+        const pengulanganList = document.getElementById("pengulangan-list");
+        const diskripsiList = document.getElementById("diskripsi-list");
+        const tindaklanjutList = document.getElementById("tindaklanjut-list");
+        const refreshButton = document.getElementById("refresh-button");
+
+        // Helper: Convert Base64 to Unit8Array for Blob
+        function base64ToBytes(base64) {
+            const binString = atob(base64);
+            return Uint8Array.from(binString, (m) => m.codePointAt(0));
+        }
+
+        // Helper: Tampilkan Rekomendasi
+        function displayAction(actionData) {
+            if (actionData) {
+                actionResult.classList.remove("d-none");
+                
+                pengulanganList.innerHTML = actionData.pengulangan.length > 0
+                    ? actionData.pengulangan.map(item => `<li class="list-group-item bg-transparent px-0 py-1">• ${item}</li>`).join("")
+                    : '<li class="list-group-item bg-transparent px-0">-</li>';
+
+                diskripsiList.innerHTML = actionData.diskripsi.length > 0
+                    ? actionData.diskripsi.map(item => `<li class="list-group-item bg-transparent px-0 py-1">• ${item}</li>`).join("")
+                    : '<li class="list-group-item bg-transparent px-0">-</li>';
+
+                tindaklanjutList.innerHTML = actionData.tindaklanjut.length > 0
+                    ? actionData.tindaklanjut.map(item => `<li class="list-group-item bg-transparent px-0 py-1">• ${item}</li>`).join("")
+                    : '<li class="list-group-item bg-transparent px-0">-</li>';
+            } else {
+                actionResult.classList.add("d-none");
+            }
+        }
+
+        // --- Handle Single Prediction ---
+        uploadForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+            
+            // UI Reset
+            loadingDiv.classList.remove("d-none");
+            singleResultContainer.classList.add("d-none");
+            multiResultContainer.classList.add("d-none");
+            actionResult.classList.add("d-none");
+
+            try {
+                const res = await fetch("/predict", { method: "POST", body: formData });
+                const data = await res.json();
+
+                loadingDiv.classList.add("d-none");
+                
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+
+                // Tampilkan Gambar & Hasil
+                imgTag.src = "data:image/png;base64," + data.image;
+                singleResultContainer.classList.remove("d-none");
+                
+                resultTextDiv.innerHTML = `
+                    <h5 class="alert-heading">Hasil Prediksi: <strong>${data.predicted_class}</strong></h5>
+                    <hr>
+                    <small>Probabilitas:</small><br>
+                    ${data.probabilities.map(p => 
+                        `<div class="d-flex justify-content-between">
+                            <span>${p.class_name}</span>
+                            <span class="fw-bold">${p.percent}%</span>
+                         </div>`
+                    ).join("")}
+                `;
+
+                // Tampilkan Action
+                displayAction(data.action);
+
+            } catch (error) {
+                console.error(error);
+                loadingDiv.classList.add("d-none");
+                alert("Terjadi kesalahan saat memproses data.");
+            }
+        });
+
+        // --- Handle Multiple Prediction ---
+        multiForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(multiForm);
+            
+            // UI Reset
+            loadingDiv.classList.remove("d-none");
+            singleResultContainer.classList.add("d-none");
+            multiResultContainer.classList.add("d-none");
+            actionResult.classList.add("d-none");
+
+            try {
+                const res = await fetch("/predict-multiple", { method: "POST", body: formData });
+                const data = await res.json();
+
+                loadingDiv.classList.add("d-none");
+                
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+
+                multiResultContainer.classList.remove("d-none");
+
+                // Summary Text
+                summaryText.innerText = `Total File: ${data.total_files} | Diproses`;
+                
+                // List Summary
+                classSummary.innerHTML = data.summary.map((cls, idx) =>
+                    `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>${idx + 1}. ${cls.class_name}</span>
+                        <span class="badge bg-primary rounded-pill">${cls.count} File (${cls.percent}%)</span>
+                    </li>`
+                ).join("");
+
+                // Handle Excel Download
+                if (data.excel_base64) {
+                    const bytes = base64ToBytes(data.excel_base64);
+                    const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+                    const url = URL.createObjectURL(blob);
+                    
+                    downloadExcelBtn.href = url;
+                    downloadExcelBtn.download = "Hasil_Prediksi_Xray.xlsx";
+                    downloadExcelBtn.classList.remove("disabled");
+                }
+
+                // Tampilkan Action (berdasarkan kelas terbanyak)
+                displayAction(data.action);
+
+            } catch (error) {
+                console.error(error);
+                loadingDiv.classList.add("d-none");
+                alert("Terjadi kesalahan saat memproses data multiple.");
+            }
+        });
+
+        refreshButton.addEventListener("click", () => {
+            location.reload(); 
+        });
+
+    </script>
+</body>
+</html>
