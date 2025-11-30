@@ -8,3 +8,4 @@ numpy
 pylibjpeg 
 pylibjpeg-libjpeg 
 pylibjpeg-openjpeg
+openpyxl
