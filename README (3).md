@@ -82,7 +82,7 @@ pip install flask tensorflow pydicom opencv-python pillow flask-cors numpy
 python app.py
 ```
 
-Akses: http://localhost:5000
+Akses: http://localhost:5001
 
 ## 5. 🖥️ Instalasi TensorFlow
 
